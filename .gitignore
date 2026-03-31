@@ -21,3 +21,6 @@ node_modules/
 #So we don't accidentally commit our private keys
 *.gpg
 ktlint-compose-*-all.jar
+
+# Native libraries (built by CI or locally via build.sh)
+**/resources/filekit/native/

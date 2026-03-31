@@ -35,10 +35,6 @@ kotlin {
             implementation(libs.kotlinx.browser)
         }
 
-        jvmMain.dependencies {
-            implementation(libs.jna.platform)
-        }
-
         androidHostTest.dependencies {
             implementation(libs.test.android.robolectric)
         }

@@ -1,0 +1,45 @@
+name: Build Native Libraries
+
+on:
+  workflow_call:
+
+jobs:
+  build-linux:
+    name: Build Linux natives
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Configure JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc libdbus-1-dev pkg-config
+
+      - name: Build native libraries
+        working-directory: filekit-dialogs/src/jvmMain/native/linux
+        run: bash build.sh
+
+      - name: Verify output
+        run: |
+          ARCH="${{ matrix.arch }}"
+          ls -la "filekit-dialogs/src/jvmMain/resources/filekit/native/linux-${ARCH}/libfilekit_linux_window.so"
+          ls -la "filekit-dialogs/src/jvmMain/resources/filekit/native/linux-${ARCH}/libfilekit_xdg_portal.so"
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: filekit-linux-${{ matrix.arch }}-natives
+          path: filekit-dialogs/src/jvmMain/resources/filekit/native/linux-${{ matrix.arch }}/
+          retention-days: 1

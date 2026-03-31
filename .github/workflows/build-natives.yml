@@ -25,19 +25,17 @@ jobs:
           java-version: '21'
 
       - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc
+        run: sudo apt-get update && sudo apt-get install -y gcc libdbus-1-dev pkg-config
 
-      - name: Build native library
+      - name: Build native libraries
         working-directory: filekit-dialogs/src/jvmMain/native/linux
         run: bash build.sh
 
       - name: Verify output
         run: |
-          if [ "${{ matrix.arch }}" = "aarch64" ]; then
-            ls -la filekit-dialogs/src/jvmMain/resources/filekit/native/linux-aarch64/libfilekit_linux_window.so
-          else
-            ls -la filekit-dialogs/src/jvmMain/resources/filekit/native/linux-x64/libfilekit_linux_window.so
-          fi
+          ARCH="${{ matrix.arch }}"
+          ls -la "filekit-dialogs/src/jvmMain/resources/filekit/native/linux-${ARCH}/libfilekit_linux_window.so"
+          ls -la "filekit-dialogs/src/jvmMain/resources/filekit/native/linux-${ARCH}/libfilekit_xdg_portal.so"
 
       - name: Upload native artifact
         uses: actions/upload-artifact@v4

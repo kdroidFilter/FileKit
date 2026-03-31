@@ -9,11 +9,11 @@ val nativeDir = layout.projectDirectory.dir("src/jvmMain/native")
 val nativeResourceDir = layout.projectDirectory.dir("src/jvmMain/resources/filekit/native")
 
 val buildNativeLinux by tasks.registering(Exec::class) {
-    description = "Compiles the Linux JNI bridge into a shared library"
+    description = "Compiles the Linux JNI bridges (JAWT + XDG portal) into shared libraries"
     group = "build"
-    val prebuiltX64 = nativeResourceDir.dir("linux-x64").file("libfilekit_linux_window.so").asFile.exists()
-    val prebuiltAarch64 = nativeResourceDir.dir("linux-aarch64").file("libfilekit_linux_window.so").asFile.exists()
-    enabled = Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) && !prebuiltX64 && !prebuiltAarch64
+    val hasPrebuilt = nativeResourceDir.dir("linux-x64").file("libfilekit_xdg_portal.so").asFile.exists() ||
+        nativeResourceDir.dir("linux-aarch64").file("libfilekit_xdg_portal.so").asFile.exists()
+    enabled = Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) && !hasPrebuilt
 
     inputs.dir(nativeDir.dir("linux"))
     outputs.dir(nativeResourceDir)
@@ -44,11 +44,6 @@ kotlin {
 
         androidHostTest.dependencies {
             implementation(libs.test.android.robolectric)
-        }
-
-        jvmMain.dependencies {
-            implementation(libs.dbus.java.core)
-            implementation(libs.dbus.java.transport.native.unixsocket)
         }
 
         wasmJsMain.dependencies {

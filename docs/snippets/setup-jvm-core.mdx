@@ -43,11 +43,6 @@ fun main() {
 If you're using ProGuard or code obfuscation on JVM platforms, add the relevant rules to your `proguard-rules.pro`:
 
 ```proguard
-# Required when using FileKit Dialogs on Linux (XDG Desktop Portal / DBus).
--keep class org.freedesktop.dbus.** { *; }
--keep class io.github.vinceglb.filekit.dialogs.platform.xdg.** { *; }
--keepattributes Signature,InnerClasses,RuntimeVisibleAnnotations
-
-# Required for JNI native bridge.
+# Required for JNI native bridge (Linux file dialogs + window ID).
 -keep class io.github.vinceglb.filekit.dialogs.platform.jni.** { *; }
 ```

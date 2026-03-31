@@ -5,9 +5,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.platform.awt.AwtFilePicker
 import io.github.vinceglb.filekit.dialogs.platform.awt.AwtFileSaver
 import io.github.vinceglb.filekit.dialogs.platform.linux.LinuxFilePicker
-import io.github.vinceglb.filekit.dialogs.platform.mac.MacOSFilePicker
 import io.github.vinceglb.filekit.dialogs.platform.swing.SwingFilePicker
-import io.github.vinceglb.filekit.dialogs.platform.windows.WindowsFilePicker
 import io.github.vinceglb.filekit.dialogs.platform.xdg.XdgFilePickerPortal
 import io.github.vinceglb.filekit.utils.Platform
 import io.github.vinceglb.filekit.utils.PlatformUtil
@@ -47,8 +45,8 @@ internal interface PlatformFilePicker {
         val current: PlatformFilePicker by lazy { createPlatformFilePicker() }
 
         private fun createPlatformFilePicker(): PlatformFilePicker = when (PlatformUtil.current) {
-            Platform.MacOS -> MacOSFilePicker()
-            Platform.Windows -> WindowsFilePicker()
+            Platform.MacOS -> AwtFilePicker()
+            Platform.Windows -> AwtFilePicker()
             Platform.Linux -> LinuxFilePicker(XdgFilePickerPortal(), AwtFilePicker(), SwingFilePicker())
         }
     }

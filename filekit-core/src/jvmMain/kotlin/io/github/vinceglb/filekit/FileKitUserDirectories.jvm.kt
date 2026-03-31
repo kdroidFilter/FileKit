@@ -1,7 +1,5 @@
 package io.github.vinceglb.filekit
 
-import com.sun.jna.platform.win32.KnownFolders
-import com.sun.jna.platform.win32.Shell32Util
 import io.github.vinceglb.filekit.utils.Platform
 import io.github.vinceglb.filekit.utils.div
 import io.github.vinceglb.filekit.utils.toPath
@@ -46,18 +44,8 @@ internal fun defaultLinuxUserDirsConfig(envProvider: (String) -> String?): Strin
     }
 }
 
-internal fun resolveKnownFolderPath(type: FileKitUserDirectory): String? =
-    runCatching {
-        Shell32Util.getKnownFolderPath(
-            when (type) {
-                FileKitUserDirectory.Downloads -> KnownFolders.FOLDERID_Downloads
-                FileKitUserDirectory.Pictures -> KnownFolders.FOLDERID_Pictures
-                FileKitUserDirectory.Videos -> KnownFolders.FOLDERID_Videos
-                FileKitUserDirectory.Music -> KnownFolders.FOLDERID_Music
-                FileKitUserDirectory.Documents -> KnownFolders.FOLDERID_Documents
-            },
-        )
-    }.getOrNull()
+// TODO: Replace with JNI call to Shell32 SHGetKnownFolderPath when Windows JNI is implemented
+internal fun resolveKnownFolderPath(@Suppress("UNUSED_PARAMETER") type: FileKitUserDirectory): String? = null
 
 internal fun parseXdgUserDirsConfig(config: String): Map<String, String> =
     buildMap {

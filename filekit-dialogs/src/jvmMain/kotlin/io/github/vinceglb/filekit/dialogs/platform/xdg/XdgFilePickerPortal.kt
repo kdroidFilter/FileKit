@@ -21,7 +21,6 @@ import org.freedesktop.dbus.interfaces.Properties
 import org.freedesktop.dbus.messages.DBusSignal
 import org.freedesktop.dbus.types.UInt32
 import org.freedesktop.dbus.types.Variant
-import java.awt.Window
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.net.URI
@@ -54,7 +53,7 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
         directory = directory,
         fileExtensions = fileExtensions,
         title = dialogSettings.title,
-        parentWindow = dialogSettings.parentWindow,
+        parentWindowId = getWindowIdentifier(dialogSettings) ?: "",
         multiple = false,
         openDirectory = false,
     )?.firstOrNull()
@@ -67,7 +66,7 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
         directory = directory,
         fileExtensions = fileExtensions,
         title = dialogSettings.title,
-        parentWindow = dialogSettings.parentWindow,
+        parentWindowId = getWindowIdentifier(dialogSettings) ?: "",
         multiple = true,
         openDirectory = false,
     )
@@ -79,7 +78,7 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
         directory = directory,
         fileExtensions = null,
         title = dialogSettings.title,
-        parentWindow = dialogSettings.parentWindow,
+        parentWindowId = getWindowIdentifier(dialogSettings) ?: "",
         multiple = false,
         openDirectory = true,
     )?.firstOrNull()
@@ -88,7 +87,7 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
         directory: PlatformFile?,
         fileExtensions: Set<String>?,
         title: String?,
-        parentWindow: Window?,
+        parentWindowId: String,
         multiple: Boolean,
         openDirectory: Boolean,
     ): List<File>? {
@@ -103,7 +102,7 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
 
             val deferredResult = registerResponseHandler(connection, handleToken)
             getFileChooserObject(connection).OpenFile(
-                parentWindow = getWindowIdentifier(parentWindow) ?: "",
+                parentWindow = parentWindowId,
                 title = title ?: "",
                 options = options,
             )
@@ -135,7 +134,7 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
 
             val deferredResult = registerResponseHandler(connection, handleToken)
             getFileChooserObject(connection).SaveFile(
-                parentWindow = getWindowIdentifier(dialogSettings.parentWindow) ?: "",
+                parentWindow = getWindowIdentifier(dialogSettings) ?: "",
                 title = "",
                 options = options,
             )
@@ -229,8 +228,15 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
     }
 
     // awt only supports X11
-    private fun getWindowIdentifier(parentWindow: Window?) =
-        parentWindow?.let { "X11:${Native.getWindowID(it)}" }
+    private fun getWindowIdentifier(settings: FileKitDialogSettings): String? = when {
+        // Opt-in: a raw native X11 XID supplied directly (e.g. a non-AWT backend
+        // such as Tao). Bypass the AWT peer entirely.
+        settings.parentWindowHandle != null -> "X11:${settings.parentWindowHandle}"
+
+        settings.parentWindow != null -> "X11:${Native.getWindowID(settings.parentWindow)}"
+
+        else -> null
+    }
 
     private fun getFileChooserObject(connection: DBusConnection) = connection.getRemoteObject(
         "org.freedesktop.portal.Desktop",

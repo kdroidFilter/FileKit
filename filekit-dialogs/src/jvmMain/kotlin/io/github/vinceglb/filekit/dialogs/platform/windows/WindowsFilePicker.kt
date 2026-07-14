@@ -1,6 +1,7 @@
 package io.github.vinceglb.filekit.dialogs.platform.windows
 
 import com.sun.jna.Native
+import com.sun.jna.Pointer
 import com.sun.jna.WString
 import com.sun.jna.platform.win32.COM.COMUtils
 import com.sun.jna.platform.win32.COM.COMUtils.FAILED
@@ -37,7 +38,6 @@ import io.github.vinceglb.filekit.dialogs.platform.windows.util.GuidFixed
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.awt.Window
 import java.io.File
 
 internal class WindowsFilePicker : PlatformFilePicker {
@@ -61,7 +61,7 @@ internal class WindowsFilePicker : PlatformFilePicker {
             ?.takeIf { it.isNotEmpty() }
             ?.let { fileOpenDialog.addFiltersToDialog(it) }
 
-        fileOpenDialog.show(dialogSettings.parentWindow) {
+        fileOpenDialog.show(dialogSettings) {
             it.getResult(SIGDN_FILESYSPATH)
         }
     }
@@ -89,7 +89,7 @@ internal class WindowsFilePicker : PlatformFilePicker {
         // Set a flag for multiple options
         fileOpenDialog.setFlag(FOS_ALLOWMULTISELECT)
 
-        fileOpenDialog.show(dialogSettings.parentWindow) {
+        fileOpenDialog.show(dialogSettings) {
             it.getResults()
         }
     }
@@ -112,7 +112,7 @@ internal class WindowsFilePicker : PlatformFilePicker {
         fileOpenDialog.setFlag(FOS_PICKFOLDERS)
 
         // Show the dialog to the user
-        fileOpenDialog.show(dialogSettings.parentWindow) {
+        fileOpenDialog.show(dialogSettings) {
             it.getResult(SIGDN_DESKTOPABSOLUTEPARSING)
         }
     }
@@ -144,7 +144,7 @@ internal class WindowsFilePicker : PlatformFilePicker {
         filterExtensions?.let { fileSaveDialog.addFiltersToDialog(it) }
 
         // Show the dialog to the user
-        fileSaveDialog.show(dialogSettings.parentWindow) {
+        fileSaveDialog.show(dialogSettings) {
             it.getResult(SIGDN_FILESYSPATH)
         }
     }
@@ -272,11 +272,11 @@ internal class WindowsFilePicker : PlatformFilePicker {
     }
 
     private fun <FD : FileDialog, T> FD.show(
-        parentWindow: Window?,
+        dialogSettings: FileKitDialogSettings,
         block: (FD) -> T,
     ): T? {
         // Show the dialog to the user
-        val openDialogResult = this.Show(parentWindow.toHwnd())
+        val openDialogResult = this.Show(dialogSettings.toHwnd())
 
         // Valid error code: User canceled the dialog
         val userCanceledException = Win32Exception(ERROR_CANCELLED)
@@ -386,15 +386,13 @@ internal class WindowsFilePicker : PlatformFilePicker {
         }
     }
 
-    private fun Window?.toHwnd(): WinDef.HWND? = when (this) {
-        null -> {
-            null
-        }
+    private fun FileKitDialogSettings.toHwnd(): WinDef.HWND? = when {
+        // Opt-in: a raw native HWND supplied directly (e.g. a non-AWT backend
+        // such as Tao). Bypass the AWT peer entirely.
+        parentWindowHandle != null -> WinDef.HWND(Pointer(parentWindowHandle))
 
-        else -> {
-            Native
-                .getWindowPointer(this)
-                .let { WinDef.HWND(it) }
-        }
+        parentWindow != null -> WinDef.HWND(Native.getWindowPointer(parentWindow))
+
+        else -> null
     }
 }

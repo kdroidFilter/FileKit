@@ -3,6 +3,7 @@ package io.github.vinceglb.filekit.dialogs.platform.xdg
 import com.sun.jna.Native
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
+import io.github.vinceglb.filekit.dialogs.NativeParentWindow
 import io.github.vinceglb.filekit.dialogs.platform.PlatformFilePicker
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.CompletableDeferred
@@ -229,8 +230,15 @@ internal class XdgFilePickerPortal : PlatformFilePicker {
     }
 
     // awt only supports X11
-    private fun getWindowIdentifier(parentWindow: Window?) =
-        parentWindow?.let { "X11:${Native.getWindowID(it)}" }
+    private fun getWindowIdentifier(parentWindow: Window?) = when {
+        parentWindow == null -> null
+
+        // Opt-in: a window that carries its own native X11 XID (e.g. a non-AWT
+        // backend such as Tao). Bypass the AWT peer entirely.
+        parentWindow is NativeParentWindow -> "X11:${parentWindow.nativeHandle}"
+
+        else -> "X11:${Native.getWindowID(parentWindow)}"
+    }
 
     private fun getFileChooserObject(connection: DBusConnection) = connection.getRemoteObject(
         "org.freedesktop.portal.Desktop",

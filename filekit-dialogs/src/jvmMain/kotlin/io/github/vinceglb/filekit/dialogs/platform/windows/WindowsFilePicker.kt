@@ -1,6 +1,7 @@
 package io.github.vinceglb.filekit.dialogs.platform.windows
 
 import com.sun.jna.Native
+import com.sun.jna.Pointer
 import com.sun.jna.WString
 import com.sun.jna.platform.win32.COM.COMUtils
 import com.sun.jna.platform.win32.COM.COMUtils.FAILED
@@ -18,6 +19,7 @@ import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
+import io.github.vinceglb.filekit.dialogs.NativeParentWindow
 import io.github.vinceglb.filekit.dialogs.platform.PlatformFilePicker
 import io.github.vinceglb.filekit.dialogs.platform.windows.jna.FileDialog
 import io.github.vinceglb.filekit.dialogs.platform.windows.jna.FileOpenDialog
@@ -386,15 +388,13 @@ internal class WindowsFilePicker : PlatformFilePicker {
         }
     }
 
-    private fun Window?.toHwnd(): WinDef.HWND? = when (this) {
-        null -> {
-            null
-        }
+    private fun Window?.toHwnd(): WinDef.HWND? = when {
+        this == null -> null
 
-        else -> {
-            Native
-                .getWindowPointer(this)
-                .let { WinDef.HWND(it) }
-        }
+        // Opt-in: a window that carries its own native HWND (e.g. a non-AWT
+        // backend such as Tao). Bypass the AWT peer entirely.
+        this is NativeParentWindow -> WinDef.HWND(Pointer(nativeHandle))
+
+        else -> WinDef.HWND(Native.getWindowPointer(this))
     }
 }
